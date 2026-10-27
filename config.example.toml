@@ -1,0 +1,116 @@
+# job-search-helper settings. Copy to config.toml (gitignored) and edit.
+# Secrets (API keys) go in .env, not here.
+
+[profile]
+# Where your resume and behavioral answers come from: a Google Docs link (shared as "Anyone
+# with the link can view"), a doc id, or a path to a local text file.
+resume_doc = ""
+behavioral_doc = ""
+
+# Steers how Claude scores jobs and tailors your materials. Keep it short and honest.
+preferences = """
+- Backend-focused roles: APIs, microservices, distributed systems. Python preferred.
+- New York City on-site/hybrid, or remote within the US.
+- Mid-level roles, about 2-3 years of experience.
+- Where my background stands out: <industries or kinds of work you want Claude to emphasize>.
+"""
+
+# Skills on your resume's "Languages:" / "Technologies:" lines are picked up automatically.
+# These are added to them for the keyword pre-rank that decides which jobs Claude scores first.
+extra_keywords = ["microservices", "distributed systems", "event-driven"]
+
+[filters]
+# Every job passes these checks before it's stored or scored. Case-insensitive, whole words.
+# A title must contain one of these...
+title_include = ["engineer", "developer", "swe", "programmer"]
+# ...and none of these. Remove "senior" and "sr" to see senior roles too (more jobs to score).
+title_exclude = [
+    # level
+    "senior", "sr", "staff", "principal", "lead", "director", "manager", "head of", "vp", "intern", "internship",
+    # other disciplines
+    "android", "ios", "mobile", "frontend", "front end", "front-end", "embedded", "firmware", "hardware", "asic",
+    "fpga", "security engineer", "design engineer", "network engineer", "analytics engineer",
+    "machine learning engineer", "ml engineer", "research engineer", "qa", "sdet", "test engineer",
+    "sales", "solutions engineer", "support engineer",
+]
+# Company boards list every office, so their jobs must be in one of these places (or remote).
+# JobSpy loops already search by location and skip this check.
+locations = ["new york", "nyc", "brooklyn", "manhattan"]
+allow_remote = true
+# Remote roles that mention any of these are dropped.
+remote_exclude = [
+    "canada", "toronto", "vancouver", "mexico", "brazil", "latam", "uk", "united kingdom", "london", "ireland",
+    "europe", "emea", "germany", "spain", "portugal", "poland", "netherlands", "france", "india", "apac",
+    "singapore", "australia", "japan",
+]
+exclude_companies = []
+
+[search]
+# JobSpy sites: indeed, linkedin, google, zip_recruiter, glassdoor. Indeed is the most
+# reliable; LinkedIn starts rate-limiting heavy use from one IP.
+sites = ["indeed", "linkedin"]
+results_per_site = 25
+hours_old = 72              # only postings from the last N hours
+distance = 25               # miles around each loop's location
+fetch_descriptions = true   # LinkedIn needs this for full descriptions (one extra request per job)
+
+# Each loop is a saved search re-run on every `jobhelper search` / `jobhelper run`, like a
+# LoopCV loop. Optional per-loop overrides: sites, results_per_site, hours_old, loopcv_location.
+[[loops]]
+name = "backend-nyc"
+search = "backend software engineer python"
+location = "New York, NY"
+
+[[loops]]
+name = "python-nyc"
+search = "python django engineer"
+location = "New York, NY"
+
+[[loops]]
+name = "integrations-nyc"
+search = "software engineer API integrations"
+location = "New York, NY"
+
+# LinkedIn can't filter by remote, so results from remote loops are kept only when they say
+# remote, are US-wide, or are in one of your [filters] locations.
+[[loops]]
+name = "backend-remote"
+search = "backend engineer python"
+location = "United States"
+remote = true
+
+[companies]
+# Company job boards read through their official public APIs: full descriptions and direct
+# apply links, no scraping. The slug is in the careers URL: boards.greenhouse.io/<slug>,
+# jobs.lever.co/<slug>, jobs.ashbyhq.com/<slug>. Write "slug:Display Name" to set the name.
+# Starter list of NYC-area engineering teams; replace with the companies you care about.
+greenhouse = [
+    "toast", "doordashusa", "opentable", "squarespace",
+    "stripe", "affirm", "mercury", "betterment", "brex", "justworks",
+    "datadog", "mongodb", "zocdoc", "seatgeek", "oscar", "clear",
+]
+lever = ["olo", "ro"]
+ashby = [
+    "owner", "spoton:SpotOn",
+    "ramp", "plaid", "socure", "sardine", "moderntreasury:Modern Treasury",
+    "headway", "rogo",
+]
+
+[llm]
+# Scoring is the high-volume call: roughly 2-3 cents per job on claude-opus-5-5 at low effort.
+# score_model = "claude-haiku-5-5" cuts that about 40x, at some cost in judgment.
+score_model = "claude-opus-5-5"
+writer_model = "claude-opus-5-5"   # prep packets and the document review
+score_effort = "low"               # low | medium | high | xhigh | max
+writer_effort = "high"
+max_jobs_scored_per_run = 60       # cost guard; the rest carry over to the next run
+min_score = 70                     # default cutoff for `jobhelper list` and the digest
+concurrency = 4
+
+[loopcv]
+# Optional LoopCV B2B API (https://api-docs.loopcv.com). With LOOPCV_API_KEY in .env, each
+# loop above is mirrored as a LoopCV loop (LoopCV re-runs it during the day) and its matches
+# come back on later searches. Remote loops need loopcv_location set ("City, Country").
+level = "Associate"       # Junior | Associate | Senior
+job_type = "Full-time"
+scrapers = []             # empty = LoopCV's defaults

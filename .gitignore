@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+
+# Secrets
+.env
+
+# Personal data: synced documents, the job database, generated packets and digests
+data/
+output/
+
+# Personal settings (copy config.example.toml)
+config.toml
